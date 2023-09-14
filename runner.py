@@ -15,10 +15,14 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(midbottom = (80,300))
         self.gravity = 0
 
+        self.jump_sound = pygame.mixer.Sound('audio/jump.mp3')
+        self.jump_sound.set_volume(0.5)
+
     def player_input(self):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_SPACE] and self.rect.bottom >= 300:
             self.gravity = -20
+            self.jump_sound.play()
 
     def apply_gravity(self):
         self.gravity += 1
@@ -83,13 +87,6 @@ def display_score():
 
     return current_time
 
-def collisions(player, obstacles):
-    if obstacles:
-        for obstacle_rect in obstacles:
-            if player.colliderect(obstacle_rect):
-                return False
-    return True
-
 def collision_sprite():
     if pygame.sprite.spritecollide(player.sprite, obstacle_group, False):
         obstacle_group.empty()
@@ -106,19 +103,21 @@ font = pygame.font.Font("font/Pixeltype.ttf", 50)
 game_active = False
 start_time = 0
 score = 0
+bg_music = pygame.mixer.Sound('audio/music.wav')
+bg_music.play(loops = -1)
 
-# Groups
+####################    groups  ####################
 player = pygame.sprite.GroupSingle()
 player.add(Player())
 
 obstacle_group = pygame.sprite.Group()
 
-# background
+####################    background  ####################
 sky_surface = pygame.image.load("graphics/Sky.png").convert()
 ground_surface = pygame.image.load("graphics/ground.png").convert()
 
 
-# intro screen
+####################    intro screen    ####################
 player_stand = pygame.image.load("./graphics/Player/player_stand.png").convert_alpha()
 player_stand = pygame.transform.rotozoom(player_stand, 0, 2)
 player_stand_rect = player_stand.get_rect(center = (400, 200))
@@ -130,7 +129,7 @@ game_message = font.render('Press space to run', False, (111,196,169))
 game_message_rect = game_message.get_rect(center = (400, 340))
 
 
-# timer
+####################    timer   ####################
 obstacle_timer = pygame.USEREVENT + 1 # create a custom event
 pygame.time.set_timer(obstacle_timer, 1400)
 
@@ -150,6 +149,7 @@ while True:
             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 game_active = True
                 start_time = int(pygame.time.get_ticks() / 1000)
+                
         
         # when custom event is triggered by the timer, add sprite obstacle
         if game_active:
