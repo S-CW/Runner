@@ -14,6 +14,7 @@ class Player(pygame.sprite.Sprite):
         self.image = self.player_walk[self.player_index]
         self.rect = self.image.get_rect(midbottom = (80,300))
         self.gravity = 0
+        self.is_muted = False
 
         self.jump_sound = pygame.mixer.Sound('audio/jump.mp3')
         self.jump_sound.set_volume(0.5)
@@ -23,6 +24,15 @@ class Player(pygame.sprite.Sprite):
         if keys[pygame.K_SPACE] and self.rect.bottom >= 300:
             self.gravity = -20
             self.jump_sound.play()
+        
+        if keys[pygame.K_m]:
+            self.is_muted = not self.is_muted
+            if not self.is_muted:
+                self.jump_sound.set_volume(0.5)
+                bg_music.play()
+            else:
+                self.jump_sound.set_volume(0)
+                bg_music.stop()
 
     def apply_gravity(self):
         self.gravity += 1
@@ -101,6 +111,7 @@ pygame.display.set_caption("Runner") # window title
 clock = pygame.time.Clock()
 font = pygame.font.Font("font/Pixeltype.ttf", 50)
 game_active = False
+mute = False
 start_time = 0
 score = 0
 bg_music = pygame.mixer.Sound('audio/music.wav')
@@ -146,10 +157,13 @@ while True:
             exit()
 
         if not game_active:
+            
             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 game_active = True
                 start_time = int(pygame.time.get_ticks() / 1000)
-                
+            
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_m:
+                player.update()
         
         # when custom event is triggered by the timer, add sprite obstacle
         if game_active:
