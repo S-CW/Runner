@@ -14,25 +14,12 @@ class Player(pygame.sprite.Sprite):
         self.image = self.player_walk[self.player_index]
         self.rect = self.image.get_rect(midbottom = (80,300))
         self.gravity = 0
-        self.is_muted = False
-
-        self.jump_sound = pygame.mixer.Sound('audio/jump.mp3')
-        self.jump_sound.set_volume(0.5)
 
     def player_input(self):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_SPACE] and self.rect.bottom >= 300:
             self.gravity = -20
-            self.jump_sound.play()
-        
-        if keys[pygame.K_m]:
-            self.is_muted = not self.is_muted
-            if not self.is_muted:
-                self.jump_sound.set_volume(0.5)
-                bg_music.play()
-            else:
-                self.jump_sound.set_volume(0)
-                bg_music.stop()
+            gameSound.jump_sound.play()
 
     def apply_gravity(self):
         self.gravity += 1
@@ -53,6 +40,31 @@ class Player(pygame.sprite.Sprite):
         self.player_input()
         self.apply_gravity()
         self.animation_state()
+
+
+class GameSound():
+    def __init__(self):
+        self.default_volume = 0.5
+        self.is_mute = False
+
+        self.jump_sound = pygame.mixer.Sound('audio/jump.mp3')
+        self.jump_sound.set_volume(self.default_volume)
+
+    def background_music(self):
+        pygame.mixer.music.load('audio/music.wav')
+        pygame.mixer.music.set_volume(self.default_volume)
+        pygame.mixer.music.play(loops = -1)
+
+    def mute(self):
+        if self.is_mute:
+            self.jump_sound.set_volume(self.default_volume)
+            pygame.mixer.music.set_volume(self.default_volume)
+            self.is_mute = False
+        else:
+            pygame.mixer.music.set_volume(0)
+            self.jump_sound.set_volume(0)
+            self.is_mute = True
+
 
 class Obstacle(pygame.sprite.Sprite):
     def __init__(self, type):
@@ -111,19 +123,19 @@ pygame.display.set_caption("Runner") # window title
 clock = pygame.time.Clock()
 font = pygame.font.Font("font/Pixeltype.ttf", 50)
 game_active = False
-mute = False
 start_time = 0
 score = 0
-bg_music = pygame.mixer.Sound('audio/music.wav')
-bg_music.play(loops = -1)
 
-####################    groups  ####################
+gameSound = GameSound()
+gameSound.background_music()
+
+####################    groups    ####################
 player = pygame.sprite.GroupSingle()
 player.add(Player())
 
 obstacle_group = pygame.sprite.Group()
 
-####################    background  ####################
+####################    background    ####################
 sky_surface = pygame.image.load("graphics/Sky.png").convert()
 ground_surface = pygame.image.load("graphics/ground.png").convert()
 
@@ -140,7 +152,7 @@ game_message = font.render('Press space to run', False, (111,196,169))
 game_message_rect = game_message.get_rect(center = (400, 340))
 
 
-####################    timer   ####################
+####################    timer    ####################
 obstacle_timer = pygame.USEREVENT + 1 # create a custom event
 pygame.time.set_timer(obstacle_timer, 1400)
 
@@ -150,25 +162,29 @@ pygame.time.set_timer(snail_animation_timer, 500)
 fly_animation_timer = pygame.USEREVENT + 3
 pygame.time.set_timer(fly_animation_timer, 200)
 
+
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             exit()
 
-        if not game_active:
-            
+        if not game_active: 
             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 game_active = True
                 start_time = int(pygame.time.get_ticks() / 1000)
             
             if event.type == pygame.KEYDOWN and event.key == pygame.K_m:
-                player.update()
+                gameSound.mute()
         
-        # when custom event is triggered by the timer, add sprite obstacle
         if game_active:
+            # when custom event is triggered by the timer, add sprite obstacle
             if event.type == obstacle_timer:
                 obstacle_group.add(Obstacle(choice(['fly', 'snail', 'snail', 'snail'])))
+            
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_m:
+                gameSound.mute()
+        
 
     if game_active:
         # background
