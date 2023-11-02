@@ -122,12 +122,9 @@ screen = pygame.display.set_mode((800,400)) # window size
 pygame.display.set_caption("Runner") # window title
 clock = pygame.time.Clock()
 font = pygame.font.Font("font/Pixeltype.ttf", 50)
-game_active = False
 start_time = 0
-score = 0
 
 gameSound = GameSound()
-gameSound.background_music()
 
 ####################    groups    ####################
 player = pygame.sprite.GroupSingle()
@@ -162,61 +159,112 @@ pygame.time.set_timer(snail_animation_timer, 500)
 fly_animation_timer = pygame.USEREVENT + 3
 pygame.time.set_timer(fly_animation_timer, 200)
 
+def draw_text(text, font, color, surface, x, y):
+    text_obj = font.render(text, 1, color)
+    text_rect = text_obj.get_rect(center = (x, y))
+    surface.blit(text_obj, text_rect)
 
-while True:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            exit()
+    return text_rect
 
-        if not game_active: 
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-                game_active = True
-                start_time = int(pygame.time.get_ticks() / 1000)
-            
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_m:
-                gameSound.mute()
+def settings():
+    running = True
+    while running:
+        click = False
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                    exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    click = True
         
+        screen.fill((0, 0, 0))
+        draw_text('Settings', font, (255, 255, 255), screen, 400, 100)
+        button_1 = draw_text('Resume game', font, (255, 255, 255), screen, 400, 175)
+        button_2 = draw_text('Options', font, (255, 255, 255), screen, 400, 225)
+
+        mouse_pos = pygame.mouse.get_pos()
+        if button_1.collidepoint(mouse_pos):
+            if click:
+                running = False
+        if button_2.collidepoint(mouse_pos):
+            if click:
+                pass
+
+        pygame.display.update()
+        clock.tick(60)
+
+
+def game():
+    running = True
+    game_active = False
+    score = 0
+    gameSound.background_music()
+    while running:
+        pause = False
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_p:
+                    settings()
+                
+            
+            if not game_active: 
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        game_active = True
+                        start_time = int(pygame.time.get_ticks() / 1000)
+                
+                    if event.key == pygame.K_m:
+                        gameSound.mute()
+            
+            if game_active:
+                # when custom event is triggered by the timer, add sprite obstacle
+                if event.type == obstacle_timer:
+                    obstacle_group.add(Obstacle(choice(['fly', 'snail', 'snail', 'snail'])))
+                
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_m:
+                    gameSound.mute()
+            
         if game_active:
-            # when custom event is triggered by the timer, add sprite obstacle
-            if event.type == obstacle_timer:
-                obstacle_group.add(Obstacle(choice(['fly', 'snail', 'snail', 'snail'])))
-            
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_m:
-                gameSound.mute()
-        
+            # background
+            screen.blit(sky_surface, (0,0))
+            screen.blit(ground_surface, (0,300))
+            score = display_score()
 
-    if game_active:
-        # background
-        screen.blit(sky_surface, (0,0))
-        screen.blit(ground_surface, (0,300))
-        score = display_score()
+            # player
+            player.draw(screen)
+            player.update()
 
-        # player
-        player.draw(screen)
-        player.update()
+            # obstacle movement
+            obstacle_group.draw(screen)
+            obstacle_group.update()
 
-        # obstacle movement
-        obstacle_group.draw(screen)
-        obstacle_group.update()
+            # collision
+            game_active = collision_sprite()
 
-        # collision
-        game_active = collision_sprite()
-
-    else:
-        screen.fill((94,129,162))
-        screen.blit(player_stand, player_stand_rect)
-        screen.blit(game_name, game_name_rect)
-
-        score_message = font.render(f'Your score: {score}', False, (111,196,169))
-        score_message_rect = score_message.get_rect(center = (400, 330))
-
-        if score == 0:
-            screen.blit(game_message, game_message_rect)
         else:
-            screen.blit(score_message, score_message_rect)
+            screen.fill((94,129,162))
+            screen.blit(player_stand, player_stand_rect)
+            screen.blit(game_name, game_name_rect)
+
+            score_message = font.render(f'Your score: {score}', False, (111,196,169))
+            score_message_rect = score_message.get_rect(center = (400, 330))
+
+            if score == 0:
+                screen.blit(game_message, game_message_rect)
+            else:
+                screen.blit(score_message, score_message_rect)
 
 
-    pygame.display.update()
+        pygame.display.update()
+        clock.tick(60) # should not run faster than 60fps aka max fps
 
-    clock.tick(60) # should not run faster than 60fps aka max fps
+game()
