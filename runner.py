@@ -45,24 +45,40 @@ class Player(pygame.sprite.Sprite):
 class GameSound():
     def __init__(self):
         self.default_volume = 0.5
+        self.volume = 0.5
         self.is_mute = False
 
         self.jump_sound = pygame.mixer.Sound('audio/jump.mp3')
         self.jump_sound.set_volume(self.default_volume)
 
     def background_music(self):
+        self.increase_volume()
+        self.decrease_volume()
         pygame.mixer.music.load('audio/music.wav')
         pygame.mixer.music.set_volume(self.default_volume)
         pygame.mixer.music.play(loops = -1)
 
+    def set_volume(self, volume):
+        pygame.mixer.music.set_volume(volume)
+        self.jump_sound.set_volume(volume)
+
+    def increase_volume(self):
+        if self.volume <= 1:
+            self.volume += 0.02
+            self.set_volume(self.volume)
+
+
+    def decrease_volume(self):
+        if self.volume >= 0:
+            self.volume -= 0.02
+            self.set_volume(self.volume)
+
     def mute(self):
         if self.is_mute:
-            self.jump_sound.set_volume(self.default_volume)
-            pygame.mixer.music.set_volume(self.default_volume)
+            self.set_volume(self.volume)
             self.is_mute = False
         else:
-            pygame.mixer.music.set_volume(0)
-            self.jump_sound.set_volume(0)
+            self.set_volume(0)
             self.is_mute = True
 
 
@@ -166,39 +182,7 @@ def draw_text(text, font, color, surface, x, y):
 
     return text_rect
 
-def settings():
-    running = True
-    while running:
-        click = False
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                exit()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    pygame.quit()
-                    exit()
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1:
-                    click = True
-        
-        screen.fill((0, 0, 0))
-        draw_text('Settings', font, (255, 255, 255), screen, 400, 100)
-        button_1 = draw_text('Resume game', font, (255, 255, 255), screen, 400, 175)
-        button_2 = draw_text('Options', font, (255, 255, 255), screen, 400, 225)
-
-        mouse_pos = pygame.mouse.get_pos()
-        if button_1.collidepoint(mouse_pos):
-            if click:
-                running = False
-        if button_2.collidepoint(mouse_pos):
-            if click:
-                pass
-
-        pygame.display.update()
-        clock.tick(60)
-
-
+# Game screen
 def game():
     running = True
     game_active = False
@@ -266,5 +250,112 @@ def game():
 
         pygame.display.update()
         clock.tick(60) # should not run faster than 60fps aka max fps
+
+# Setting screen
+def settings():
+    running = True
+    text_col = (255, 255, 255)
+    while running:
+        click = False
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+                    
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    click = True
+            
+        screen.fill((0, 0, 0))
+        draw_text('Settings', font, text_col, screen, 400, 100)
+        RESUME = draw_text('Resume game', font, text_col, screen, 400, 175)
+        OPTIONS = draw_text('Options', font, text_col, screen, 400, 225)
+        QUIT = draw_text('Quit', font, text_col, screen, 400, 275)
+
+        mouse_pos = pygame.mouse.get_pos()
+        if RESUME.collidepoint(mouse_pos):
+            draw_text('Resume game', font, (255, 255, 0), screen, 400, 175)
+            if click:
+                running = False
+        if OPTIONS.collidepoint(mouse_pos):
+            draw_text('Options', font, (255, 255, 0), screen, 400, 225)
+            if click:
+                options()
+        if QUIT.collidepoint(mouse_pos):
+            draw_text('Quit', font, (255, 255, 0), screen, 400, 275)
+            if click:
+                pygame.quit()
+                exit()
+
+        pygame.display.update()
+        clock.tick(60)
+
+# Option screen
+def options():
+    running = True
+    text_col = (255, 255, 255)
+    mute = False
+    mute_font = pygame.font.Font("font/Pixeltype.ttf", 50)
+    mute_font.set_strikethrough(True)
+
+    print(gameSound.volume)
+    while running:
+        volume = round(gameSound.volume * 100)
+        click = False
+        # print(volume = (gameSound.volume * 100))
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False # Return to setting screen
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    click = True
+        
+        screen.fill((0, 0, 0))
+        draw_text('Settings', font, text_col, screen, 400, 100)
+        draw_text('Sound: ', font, text_col, screen, 400, 175)
+
+        SOUND_DECREASE = draw_text('-', font, text_col, screen, 475, 175)
+        SOUND_INCREASE = draw_text('+', font, text_col, screen, 575, 175)
+        draw_text(f'{volume}', font, text_col, screen, 525, 175)
+        MUTE = draw_text('Mute', font, text_col, screen, 400, 225)
+        BACK = draw_text('Back', font, text_col, screen, 400, 275)
+
+        mouse_pos = pygame.mouse.get_pos()
+        if mute == True:
+            draw_text('Mute', mute_font, text_col, screen, 400, 225)
+        if MUTE.collidepoint(mouse_pos):
+            draw_text('Mute', font, (255, 255, 0), screen, 400, 225)
+            if click:
+                gameSound.mute()
+                mute = not mute
+        
+        if SOUND_DECREASE.collidepoint(mouse_pos):
+            draw_text('-', font, (255, 255, 0), screen, 475, 175)
+            if click and volume > 0:
+                gameSound.decrease_volume()
+
+                draw_text(f'{volume}', font, text_col, screen, 525, 175)
+
+        if SOUND_INCREASE.collidepoint(mouse_pos):
+            draw_text('+', font, (255, 255, 0), screen, 575, 175)
+            if click and volume < 100:
+                gameSound.increase_volume()
+                
+                draw_text(f'{volume}', font, text_col, screen, 525, 175)
+
+        if BACK.collidepoint(mouse_pos):
+            draw_text('Back', font, (255, 255, 0), screen, 400, 275)
+            if click:
+                running = False
+
+        pygame.display.update()
+        clock.tick(60)
 
 game()
