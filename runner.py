@@ -301,11 +301,10 @@ def options():
     mute_font = pygame.font.Font("font/Pixeltype.ttf", 50)
     mute_font.set_strikethrough(True)
 
-    print(gameSound.volume)
     while running:
         volume = round(gameSound.volume * 100)
         click = False
-        # print(volume = (gameSound.volume * 100))
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -320,10 +319,10 @@ def options():
         screen.fill((0, 0, 0))
         draw_text('Settings', font, text_col, screen, 400, 100)
         draw_text('Sound: ', font, text_col, screen, 400, 175)
+        draw_text(f'{volume}', font, text_col, screen, 525, 175)
 
         SOUND_DECREASE = draw_text('-', font, text_col, screen, 475, 175)
         SOUND_INCREASE = draw_text('+', font, text_col, screen, 575, 175)
-        draw_text(f'{volume}', font, text_col, screen, 525, 175)
         MUTE = draw_text('Mute', font, text_col, screen, 400, 225)
         BACK = draw_text('Back', font, text_col, screen, 400, 275)
 
@@ -340,14 +339,12 @@ def options():
             draw_text('-', font, (255, 255, 0), screen, 475, 175)
             if click and volume > 0:
                 gameSound.decrease_volume()
-
                 draw_text(f'{volume}', font, text_col, screen, 525, 175)
 
         if SOUND_INCREASE.collidepoint(mouse_pos):
             draw_text('+', font, (255, 255, 0), screen, 575, 175)
             if click and volume < 100:
                 gameSound.increase_volume()
-                
                 draw_text(f'{volume}', font, text_col, screen, 525, 175)
 
         if BACK.collidepoint(mouse_pos):
