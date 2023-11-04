@@ -139,6 +139,9 @@ pygame.display.set_caption("Runner") # window title
 clock = pygame.time.Clock()
 font = pygame.font.Font("font/Pixeltype.ttf", 50)
 start_time = 0
+score = 0
+game_active = False
+
 
 gameSound = GameSound()
 
@@ -175,6 +178,8 @@ pygame.time.set_timer(snail_animation_timer, 500)
 fly_animation_timer = pygame.USEREVENT + 3
 pygame.time.set_timer(fly_animation_timer, 200)
 
+
+####################    text    ####################
 def draw_text(text, font, color, surface, x, y):
     text_obj = font.render(text, 1, color)
     text_rect = text_obj.get_rect(center = (x, y))
@@ -183,73 +188,7 @@ def draw_text(text, font, color, surface, x, y):
     return text_rect
 
 # Game screen
-def game():
-    running = True
-    game_active = False
-    score = 0
-    gameSound.background_music()
-    while running:
-        pause = False
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                exit()
-
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_p:
-                    settings()
-                
-            
-            if not game_active: 
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_SPACE:
-                        game_active = True
-                        start_time = int(pygame.time.get_ticks() / 1000)
-                
-                    if event.key == pygame.K_m:
-                        gameSound.mute()
-            
-            if game_active:
-                # when custom event is triggered by the timer, add sprite obstacle
-                if event.type == obstacle_timer:
-                    obstacle_group.add(Obstacle(choice(['fly', 'snail', 'snail', 'snail'])))
-                
-                if event.type == pygame.KEYDOWN and event.key == pygame.K_m:
-                    gameSound.mute()
-            
-        if game_active:
-            # background
-            screen.blit(sky_surface, (0,0))
-            screen.blit(ground_surface, (0,300))
-            score = display_score()
-
-            # player
-            player.draw(screen)
-            player.update()
-
-            # obstacle movement
-            obstacle_group.draw(screen)
-            obstacle_group.update()
-
-            # collision
-            game_active = collision_sprite()
-
-        else:
-            screen.fill((94,129,162))
-            screen.blit(player_stand, player_stand_rect)
-            screen.blit(game_name, game_name_rect)
-
-            score_message = font.render(f'Your score: {score}', False, (111,196,169))
-            score_message_rect = score_message.get_rect(center = (400, 330))
-
-            if score == 0:
-                screen.blit(game_message, game_message_rect)
-            else:
-                screen.blit(score_message, score_message_rect)
-
-
-        pygame.display.update()
-        clock.tick(60) # should not run faster than 60fps aka max fps
+gameSound.background_music()
 
 # Setting screen
 def settings():
@@ -301,6 +240,11 @@ def options():
     mute_font = pygame.font.Font("font/Pixeltype.ttf", 50)
     mute_font.set_strikethrough(True)
 
+    speed = 1
+    holding = False
+    draw_time = 0
+    delay = 1000 # delay in miliseconds
+    counter = 0
     while running:
         volume = round(gameSound.volume * 100)
         click = False
@@ -316,6 +260,21 @@ def options():
                 if event.button == 1:
                     click = True
         
+        current_time = pygame.time.get_ticks()
+        mouse_pos = pygame.mouse.get_pos()
+        mouse_stat = pygame.mouse.get_pressed()
+
+        if mouse_stat[0]:
+            if not holding:
+                holding = True
+                draw_time = current_time + delay
+            elif current_time >= draw_time:
+                speed *= 1.02
+                
+        else:
+            holding = False
+            speed = 1
+
         screen.fill((0, 0, 0))
         draw_text('Settings', font, text_col, screen, 400, 100)
         draw_text('Sound: ', font, text_col, screen, 400, 175)
@@ -326,7 +285,6 @@ def options():
         MUTE = draw_text('Mute', font, text_col, screen, 400, 225)
         BACK = draw_text('Back', font, text_col, screen, 400, 275)
 
-        mouse_pos = pygame.mouse.get_pos()
         if mute == True:
             draw_text('Mute', mute_font, text_col, screen, 400, 225)
         if MUTE.collidepoint(mouse_pos):
@@ -337,15 +295,20 @@ def options():
         
         if SOUND_DECREASE.collidepoint(mouse_pos):
             draw_text('-', font, (255, 255, 0), screen, 475, 175)
-            if click and volume > 0:
-                gameSound.decrease_volume()
-                draw_text(f'{volume}', font, text_col, screen, 525, 175)
+            if mouse_stat[0] and volume > 0:
+                if current_time >= draw_time or click:
+                    gameSound.decrease_volume()
+                    draw_text(f'{volume}', font, text_col, screen, 525, 175)
 
         if SOUND_INCREASE.collidepoint(mouse_pos):
             draw_text('+', font, (255, 255, 0), screen, 575, 175)
-            if click and volume < 100:
-                gameSound.increase_volume()
-                draw_text(f'{volume}', font, text_col, screen, 525, 175)
+            if mouse_stat[0] and volume < 100:
+                if current_time >= draw_time or click:
+                    volume += speed
+                    volume = round(volume)
+
+                    gameSound.increase_volume()
+                    draw_text(f'{volume}', font, text_col, screen, 525, 175)
 
         if BACK.collidepoint(mouse_pos):
             draw_text('Back', font, (255, 255, 0), screen, 400, 275)
@@ -355,4 +318,66 @@ def options():
         pygame.display.update()
         clock.tick(60)
 
-game()
+options()
+while True:
+    pause = False
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            exit()
+
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_p:
+                settings()
+            
+        
+        if not game_active: 
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    game_active = True
+                    start_time = int(pygame.time.get_ticks() / 1000)
+            
+                if event.key == pygame.K_m:
+                    gameSound.mute()
+        
+        if game_active:
+            # when custom event is triggered by the timer, add sprite obstacle
+            if event.type == obstacle_timer:
+                obstacle_group.add(Obstacle(choice(['fly', 'snail', 'snail', 'snail'])))
+            
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_m:
+                gameSound.mute()
+        
+    if game_active:
+        # background
+        screen.blit(sky_surface, (0,0))
+        screen.blit(ground_surface, (0,300))
+        score = display_score()
+
+        # player
+        player.draw(screen)
+        player.update()
+
+        # obstacle movement
+        obstacle_group.draw(screen)
+        obstacle_group.update()
+
+        # collision
+        game_active = collision_sprite()
+
+    else:
+        screen.fill((94,129,162))
+        screen.blit(player_stand, player_stand_rect)
+        screen.blit(game_name, game_name_rect)
+
+        score_message = font.render(f'Your score: {score}', False, (111,196,169))
+        score_message_rect = score_message.get_rect(center = (400, 330))
+
+        if score == 0:
+            screen.blit(game_message, game_message_rect)
+        else:
+            screen.blit(score_message, score_message_rect)
+
+
+    pygame.display.update()
+    clock.tick(60) # should not run faster than 60fps aka max fps
