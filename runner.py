@@ -62,6 +62,13 @@ class GameSound():
         pygame.mixer.music.set_volume(volume)
         self.jump_sound.set_volume(volume)
 
+    def adjust_volume(self, change):
+        if change == -1:
+            self.decrease_volume()
+        else:
+            self.increase_volume()
+
+
     def increase_volume(self):
         if self.volume <= 1:
             self.volume += 0.02
@@ -239,12 +246,31 @@ def options():
     mute = False
     mute_font = pygame.font.Font("font/Pixeltype.ttf", 50)
     mute_font.set_strikethrough(True)
+    mouse_hold = False
+    target_time = 0
+    delay = 500 # delay in miliseconds
 
-    speed = 1
-    holding = False
-    draw_time = 0
-    delay = 1000 # delay in miliseconds
-    counter = 0
+    def handle_volume_control(mouse_stat, mouse_pos, volume, timer, target_time, delay, click):
+        if SOUND_DECREASE.collidepoint(mouse_pos):
+            draw_text('-', font, (255, 255, 0), screen, 475, 175)
+            return volume_change(mouse_stat, volume, timer, target_time, delay, click, -1)
+    
+
+        if SOUND_INCREASE.collidepoint(mouse_pos):
+            draw_text('+', font, (255, 255, 0), screen, 575, 175)
+            return volume_change(mouse_stat, volume, timer, target_time, delay, click, 1)
+            
+
+    def volume_change(mouse_stat, volume, timer, target_time, delay, click, change):
+        if mouse_stat[0] and 0 <= volume + change <= 100:
+            if timer >= target_time or click:
+                gameSound.adjust_volume(change)
+                draw_text(f'{volume}', font, text_col, screen, 525, 175)
+
+                target_time = timer + delay
+                return target_time
+        return target_time
+
     while running:
         volume = round(gameSound.volume * 100)
         click = False
@@ -255,31 +281,32 @@ def options():
                 exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    running = False # Return to setting screen
+                    # Return to setting screen
+                    running = False
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     click = True
         
-        current_time = pygame.time.get_ticks()
+        timer = pygame.time.get_ticks()
         mouse_pos = pygame.mouse.get_pos()
         mouse_stat = pygame.mouse.get_pressed()
 
         if mouse_stat[0]:
-            if not holding:
-                holding = True
-                draw_time = current_time + delay
-            elif current_time >= draw_time:
-                speed *= 1.02
-                
+            if not mouse_hold:
+                mouse_hold = True
+                target_time = timer + delay
+            elif timer >= target_time:
+                delay /= 1.6
         else:
-            holding = False
-            speed = 1
+            mouse_hold = False
+            delay = 500
 
         screen.fill((0, 0, 0))
         draw_text('Settings', font, text_col, screen, 400, 100)
         draw_text('Sound: ', font, text_col, screen, 400, 175)
         draw_text(f'{volume}', font, text_col, screen, 525, 175)
 
+        # Buttons
         SOUND_DECREASE = draw_text('-', font, text_col, screen, 475, 175)
         SOUND_INCREASE = draw_text('+', font, text_col, screen, 575, 175)
         MUTE = draw_text('Mute', font, text_col, screen, 400, 225)
@@ -292,23 +319,9 @@ def options():
             if click:
                 gameSound.mute()
                 mute = not mute
-        
-        if SOUND_DECREASE.collidepoint(mouse_pos):
-            draw_text('-', font, (255, 255, 0), screen, 475, 175)
-            if mouse_stat[0] and volume > 0:
-                if current_time >= draw_time or click:
-                    gameSound.decrease_volume()
-                    draw_text(f'{volume}', font, text_col, screen, 525, 175)
 
-        if SOUND_INCREASE.collidepoint(mouse_pos):
-            draw_text('+', font, (255, 255, 0), screen, 575, 175)
-            if mouse_stat[0] and volume < 100:
-                if current_time >= draw_time or click:
-                    volume += speed
-                    volume = round(volume)
-
-                    gameSound.increase_volume()
-                    draw_text(f'{volume}', font, text_col, screen, 525, 175)
+        result = handle_volume_control(mouse_stat, mouse_pos, volume, timer, target_time, delay, click)
+        target_time = result if result else target_time
 
         if BACK.collidepoint(mouse_pos):
             draw_text('Back', font, (255, 255, 0), screen, 400, 275)
@@ -318,7 +331,6 @@ def options():
         pygame.display.update()
         clock.tick(60)
 
-options()
 while True:
     pause = False
     for event in pygame.event.get():
