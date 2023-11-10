@@ -20,6 +20,7 @@ Runner Game is a Python-based game that utilizes the pygame package to create an
         python runner.py 
     `
 
+
 ## Control
 1. Press **P** to open setting menu
 
@@ -33,4 +34,10 @@ Here are some planned enhancements for future development:
 - [ ] **Progressive Difficulty**
     Implement a feature where the game's speed gradually increases as the player's score goes up, making the game more challenging over time.
 - [ ] **Additional Scoring Opportunities**
+
+1. **Adjustable Background Music Volume**
+    Allow users to customize the volume of the background music to their preference.
+2. **Progressive Difficulty**
+    Implement a feature where the game's speed gradually increases as the player's score goes up, making the game more challenging over time.
+3. **Additional Scoring Opportunities**
     Introduce new surfaces or elements within the game that enable players to earn extra points, adding more depth and excitement to the gameplay.

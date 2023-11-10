@@ -21,6 +21,7 @@ class Player(pygame.sprite.Sprite):
             self.gravity = -20
             gameSound.jump_sound.play()
 
+
     def apply_gravity(self):
         self.gravity += 1
         self.rect.y += self.gravity
@@ -149,7 +150,6 @@ start_time = 0
 score = 0
 game_active = False
 
-
 gameSound = GameSound()
 
 ####################    groups    ####################
@@ -157,6 +157,7 @@ player = pygame.sprite.GroupSingle()
 player.add(Player())
 
 obstacle_group = pygame.sprite.Group()
+
 
 ####################    background    ####################
 sky_surface = pygame.image.load("graphics/Sky.png").convert()
