@@ -3,6 +3,7 @@ from sys import exit
 from random import randint, choice
 
 class Player(pygame.sprite.Sprite):
+    sprite_initial_speed = 0
     def __init__(self):
         super().__init__()
         player_walk_1 = pygame.image.load('graphics/Player/player_walk_1.png').convert_alpha()
@@ -14,6 +15,9 @@ class Player(pygame.sprite.Sprite):
         self.image = self.player_walk[self.player_index]
         self.rect = self.image.get_rect(midbottom = (80,300))
         self.gravity = 0
+
+        self.speed = Player.sprite_initial_speed
+        self.acceleration = 0.0005
 
     def player_input(self):
         keys = pygame.key.get_pressed()
@@ -29,12 +33,14 @@ class Player(pygame.sprite.Sprite):
             self.rect.bottom = 300
     
     def animation_state(self):
+        self.speed += 0.1 * self.acceleration
+
         if self.rect.bottom < 300:
             self.image = self.player_jump
-        else:
-            self.player_index += 0.1
+        else:            
+            self.player_index += (0.1 + self.speed)
+            
             if self.player_index >= len(self.player_walk): self.player_index = 0
-
             self.image = self.player_walk[int(self.player_index)]
 
     def update(self):
@@ -91,6 +97,7 @@ class GameSound():
 
 
 class Obstacle(pygame.sprite.Sprite):
+    sprite_initial_speed = 6
     def __init__(self, type):
         super().__init__()
 
@@ -108,20 +115,30 @@ class Obstacle(pygame.sprite.Sprite):
         self.animation_index = 0
         self.image = self.frames[self.animation_index]
         self.rect = self.image.get_rect(midbottom = (randint(900, 1100), y_pos))
+        self.speed = Obstacle.sprite_initial_speed
+        self.acceleration = 0.0001
+        self.action_speed = 0
 
     def animation_state(self):
-        self.animation_index += 0.1
+        self.action_speed += 0.1 * 0.0005
+        self.animation_index += (0.1 + self.action_speed) 
         if self.animation_index > len(self.frames): self.animation_index = 0
         
         self.image = self.frames[int(self.animation_index)]
 
     def destroy(self):
         if self.rect.x <= -100:
+            Obstacle.sprite_initial_speed = self.speed
             self.kill()
 
     def update(self):
         self.animation_state()
-        self.rect.x -= 6
+
+        # Max speed 50
+        if self.speed < 50:
+            self.speed += self.acceleration * score
+        self.rect.x -= self.speed
+
         self.destroy()
 
 
@@ -152,10 +169,9 @@ game_active = False
 
 gameSound = GameSound()
 
+
 ####################    groups    ####################
 player = pygame.sprite.GroupSingle()
-player.add(Player())
-
 obstacle_group = pygame.sprite.Group()
 
 
@@ -168,12 +184,6 @@ ground_surface = pygame.image.load("graphics/ground.png").convert()
 player_stand = pygame.image.load("./graphics/Player/player_stand.png").convert_alpha()
 player_stand = pygame.transform.rotozoom(player_stand, 0, 2)
 player_stand_rect = player_stand.get_rect(center = (400, 200))
-
-game_name = font.render("Pixel Runner", False, (111,196,169))
-game_name_rect = game_name.get_rect(center = (400, 80))
-
-game_message = font.render('Press space to run', False, (111,196,169))
-game_message_rect = game_message.get_rect(center = (400, 340))
 
 
 ####################    timer    ####################
@@ -342,11 +352,15 @@ while True:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_p:
                 settings()
-            
-        
+
         if not game_active: 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
+                    # sprite_initial speed is set before add sprite
+                    Obstacle.sprite_initial_speed = 6
+                    Player.sprite_initial_speed = 0
+
+                    player.add(Player())
                     game_active = True
                     start_time = int(pygame.time.get_ticks() / 1000)
             
@@ -381,16 +395,15 @@ while True:
     else:
         screen.fill((94,129,162))
         screen.blit(player_stand, player_stand_rect)
-        screen.blit(game_name, game_name_rect)
+        game_name = draw_text("Pixel Runner", font, (111,196,169), screen, 400, 80)
 
         score_message = font.render(f'Your score: {score}', False, (111,196,169))
         score_message_rect = score_message.get_rect(center = (400, 330))
 
         if score == 0:
-            screen.blit(game_message, game_message_rect)
+            game_mesage = draw_text("Press space to run", font, (111,196,169), screen, 400, 340)
         else:
             screen.blit(score_message, score_message_rect)
-
 
     pygame.display.update()
     clock.tick(60) # should not run faster than 60fps aka max fps
