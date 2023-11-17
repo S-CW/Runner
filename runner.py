@@ -49,6 +49,52 @@ class Player(pygame.sprite.Sprite):
         self.animation_state()
 
 
+class Obstacle(pygame.sprite.Sprite):
+    sprite_initial_speed = 6
+    def __init__(self, type):
+        super().__init__()
+
+        if type == 'fly':
+            fly_1 = pygame.image.load("graphics/Fly/Fly1.png").convert_alpha()
+            fly_2 = pygame.image.load("graphics/Fly/Fly2.png").convert_alpha()
+            self.frames = [fly_1, fly_2]
+            y_pos = choice([180, 200, 210, 260, 280])
+        else:
+            snail_1 = pygame.image.load("graphics/snail/snail1.png").convert_alpha()
+            snail_2 = pygame.image.load("graphics/snail/snail2.png").convert_alpha()
+            self.frames = [snail_1, snail_2]
+            y_pos = 300
+
+        self.animation_index = 0
+        self.image = self.frames[self.animation_index]
+        self.rect = self.image.get_rect(midbottom = (randint(900, 1100), y_pos))
+        self.speed = Obstacle.sprite_initial_speed
+        self.acceleration = 0.0001
+        self.action_speed = 0
+
+    def animation_state(self):
+        self.action_speed += 0.1 * 0.0005
+        self.animation_index += (0.1 + self.action_speed) 
+        if self.animation_index > len(self.frames): self.animation_index = 0
+        
+        self.image = self.frames[int(self.animation_index)]
+
+    def destroy(self):
+        if self.rect.x <= -100:
+            Obstacle.sprite_initial_speed = self.speed
+            self.kill()
+
+    def update(self):
+        self.animation_state()
+
+        # Max speed 50
+        if self.speed < 50:
+            self.speed += self.acceleration * score
+        self.rect.x -= self.speed
+
+        self.destroy()
+
+
 class GameSound():
     def __init__(self):
         self.default_volume = 0.5
@@ -96,52 +142,6 @@ class GameSound():
             self.is_mute = True
 
 
-class Obstacle(pygame.sprite.Sprite):
-    sprite_initial_speed = 6
-    def __init__(self, type):
-        super().__init__()
-
-        if type == 'fly':
-            fly_1 = pygame.image.load("graphics/Fly/Fly1.png").convert_alpha()
-            fly_2 = pygame.image.load("graphics/Fly/Fly2.png").convert_alpha()
-            self.frames = [fly_1, fly_2]
-            y_pos = 210
-        else:
-            snail_1 = pygame.image.load("graphics/snail/snail1.png").convert_alpha()
-            snail_2 = pygame.image.load("graphics/snail/snail2.png").convert_alpha()
-            self.frames = [snail_1, snail_2]
-            y_pos = 300
-
-        self.animation_index = 0
-        self.image = self.frames[self.animation_index]
-        self.rect = self.image.get_rect(midbottom = (randint(900, 1100), y_pos))
-        self.speed = Obstacle.sprite_initial_speed
-        self.acceleration = 0.0001
-        self.action_speed = 0
-
-    def animation_state(self):
-        self.action_speed += 0.1 * 0.0005
-        self.animation_index += (0.1 + self.action_speed) 
-        if self.animation_index > len(self.frames): self.animation_index = 0
-        
-        self.image = self.frames[int(self.animation_index)]
-
-    def destroy(self):
-        if self.rect.x <= -100:
-            Obstacle.sprite_initial_speed = self.speed
-            self.kill()
-
-    def update(self):
-        self.animation_state()
-
-        # Max speed 50
-        if self.speed < 50:
-            self.speed += self.acceleration * score
-        self.rect.x -= self.speed
-
-        self.destroy()
-
-
 def display_score():
     # latest time - start game time - time paused
     current_time = int(pygame.time.get_ticks() / 1000) - start_time - elapse_time
@@ -165,9 +165,11 @@ screen = pygame.display.set_mode((800,400)) # window size
 pygame.display.set_caption("Runner") # window title
 clock = pygame.time.Clock()
 font = pygame.font.Font("font/Pixeltype.ttf", 50)
-start_time = 0
 score = 0
+start_time = 0
+elapse_time = 0
 game_active = False
+spawn_rate_type = ['fly', 'snail', 'snail', 'snail'] # control the chances of monster type to spawn
 
 gameSound = GameSound()
 
@@ -260,7 +262,6 @@ def settings():
 def options():
     running = True
     text_col = (255, 255, 255)
-    mute = False
     mute_font = pygame.font.Font("font/Pixeltype.ttf", 50)
     mute_font.set_strikethrough(True)
     mouse_hold = False
@@ -329,13 +330,13 @@ def options():
         MUTE = draw_text('Mute', font, text_col, screen, 400, 225)
         BACK = draw_text('Back', font, text_col, screen, 400, 275)
 
-        if mute == True:
+        if gameSound.is_mute:
             draw_text('Mute', mute_font, text_col, screen, 400, 225)
+
         if MUTE.collidepoint(mouse_pos):
             draw_text('Mute', font, (255, 255, 0), screen, 400, 225)
             if click:
                 gameSound.mute()
-                mute = not mute
 
         result = handle_volume_control(mouse_stat, mouse_pos, volume, timer, target_time, delay, click)
         target_time = result if result else target_time
@@ -349,7 +350,6 @@ def options():
         clock.tick(60)
 
 
-elapse_time = 0
 while True:
     pause = False
     for event in pygame.event.get():
@@ -381,11 +381,16 @@ while True:
         if game_active:
             # when custom event is triggered by the timer, add sprite obstacle
             if event.type == obstacle_timer:
-                obstacle_group.add(Obstacle(choice(['fly', 'snail', 'snail', 'snail'])))
+                obstacle_group.add(Obstacle(choice(spawn_rate_type)))
+                
+                if obstacle_group.sprites()[0].speed > 20:
+                    pygame.time.set_timer(obstacle_timer, 500)
+                elif obstacle_group.sprites()[0].speed > 10:
+                    pygame.time.set_timer(obstacle_timer, randint(600, 800))
             
             if event.type == pygame.KEYDOWN and event.key == pygame.K_m:
                 gameSound.mute()
-        
+
     if game_active:
         # background
         screen.blit(sky_surface, (0,0))
