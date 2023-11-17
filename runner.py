@@ -143,7 +143,9 @@ class Obstacle(pygame.sprite.Sprite):
 
 
 def display_score():
-    current_time = int(pygame.time.get_ticks() / 1000) - start_time
+    # latest time - start game time - time paused
+    current_time = int(pygame.time.get_ticks() / 1000) - start_time - elapse_time
+
     score_surf = font.render(f'Score: {current_time}', False, (64,64,64))
     score_rect = score_surf.get_rect(center = (400,50))
     screen.blit(score_surf, score_rect)
@@ -213,6 +215,8 @@ def settings():
     running = True
     text_col = (255, 255, 255)
     while running:
+        current_time = int(pygame.time.get_ticks() / 1000) - stopped_time
+
         click = False
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -249,6 +253,8 @@ def settings():
 
         pygame.display.update()
         clock.tick(60)
+    
+    return current_time
 
 # Option screen
 def options():
@@ -342,6 +348,8 @@ def options():
         pygame.display.update()
         clock.tick(60)
 
+
+elapse_time = 0
 while True:
     pause = False
     for event in pygame.event.get():
@@ -351,7 +359,8 @@ while True:
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_p:
-                settings()
+                stopped_time = int(pygame.time.get_ticks() / 1000)
+                elapse_time += settings()
 
         if not game_active: 
             if event.type == pygame.KEYDOWN:
@@ -362,7 +371,9 @@ while True:
 
                     player.add(Player())
                     game_active = True
+
                     start_time = int(pygame.time.get_ticks() / 1000)
+                    elapse_time = 0
             
                 if event.key == pygame.K_m:
                     gameSound.mute()
@@ -379,6 +390,7 @@ while True:
         # background
         screen.blit(sky_surface, (0,0))
         screen.blit(ground_surface, (0,300))
+
         score = display_score()
 
         # player
