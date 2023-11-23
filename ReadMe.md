@@ -4,21 +4,21 @@ Runner Game is a Python-based game that utilizes the pygame package to create an
 
 ## How to use
 1. **Clone the Repository**
-```bash
-   git clone git@github.com:S-CW/Runner-game.git
-```
+    ```bash
+    git clone git@github.com:S-CW/Runner-game.git
+    ```
 
 2. **Install Dependencies**
     Install the required dependencies from the **requirements.txt** file using pip.
-    `
+    ```bash
     pip install -r requirements.txt
-    `
+    ```
 
 3. **Run the Game**
     To start the game, open a terminal and run the following command:
-    `
-        python runner.py 
-    `
+    ```bash
+    python runner.py 
+    ```
 
 ## Control
 1. Press **P** to open setting menu
@@ -26,12 +26,12 @@ Runner Game is a Python-based game that utilizes the pygame package to create an
 2. Press **M** ingame to mute/unmute
 
 ## Variable
-1. **spawn_rate_type**, a list of monster type that control the spawn rate of monster type. As of now only two monster type is available: bird, snail
+1. **spawn_rate_type**: A list of monster type that control the spawn rate of monster type. As of now only two monster type is available: bird, snail.
 **Usage**
 `
     ['fly', 'snail', 'snail', 'snail']
 `
-
+2. **Obstacle.acceleration**: Control the acceleration speed of obstacle over time.
 
 ## Future development
 Here are some planned enhancements for future development:
