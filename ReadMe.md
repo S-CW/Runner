@@ -26,11 +26,11 @@ Runner Game is a Python-based game that utilizes the pygame package to create an
 
 2. Press **M** ingame to mute/unmute
 
-3. Press **SPACE** to jump
+3. Press **SPACE** or ⬆️ to jump
 
-4. Press **A** to move left
+4. Press **A** or ⬅️  to move left
 
-5. Press **D** to move right
+5. Press **D** or ➡️ to move right
 
 
 ## Variable

@@ -22,13 +22,13 @@ class Player(pygame.sprite.Sprite):
     def player_input(self):
 
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_SPACE] and self.rect.bottom >= 300:
+        if (keys[pygame.K_SPACE] or keys[pygame.K_UP]) and self.rect.bottom >= 300:
             self.gravity = -20
             gameSound.jump_sound.play()
 
-        if keys[pygame.K_a] or keys[pygame.K_LEFT] and self.rect.x >= 0:
-            self.rect.x -= 6
-        if keys[pygame.K_d] or keys[pygame.K_RIGHT] and self.rect.x <= 730:
+        if (keys[pygame.K_a] or keys[pygame.K_LEFT]) and self.rect.left >= 0:
+            self.rect.x -= 8
+        if (keys[pygame.K_d] or keys[pygame.K_RIGHT]) and self.rect.right <= 730:
             self.rect.x += 6
     
 
@@ -409,6 +409,7 @@ while True:
             if event.type == obstacle_timer:
                 obstacle_group.add(Obstacle(choice(spawn_rate_type)))
                 
+                print(obstacle_group.sprites()[0].speed)
                 if obstacle_group.sprites()[0].speed > 20:
                     pygame.time.set_timer(obstacle_timer, 500)
                 elif obstacle_group.sprites()[0].speed > 10:
