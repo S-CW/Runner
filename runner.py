@@ -20,11 +20,17 @@ class Player(pygame.sprite.Sprite):
         self.acceleration = 0.0005
 
     def player_input(self):
+
         keys = pygame.key.get_pressed()
         if keys[pygame.K_SPACE] and self.rect.bottom >= 300:
             self.gravity = -20
             gameSound.jump_sound.play()
 
+        if keys[pygame.K_a] or keys[pygame.K_LEFT] and self.rect.x >= 0:
+            self.rect.x -= 6
+        if keys[pygame.K_d] or keys[pygame.K_RIGHT] and self.rect.x <= 730:
+            self.rect.x += 6
+    
 
     def apply_gravity(self):
         self.gravity += 1
@@ -72,6 +78,11 @@ class Obstacle(pygame.sprite.Sprite):
         self.acceleration = 0.0001
         self.action_speed = 0
 
+        # For fly to move up and down only
+        self.type = type
+        self.move_up = True
+        self.distance_travelled = 0
+
     def animation_state(self):
         self.action_speed += 0.1 * 0.0005
         self.animation_index += (0.1 + self.action_speed) 
@@ -86,9 +97,23 @@ class Obstacle(pygame.sprite.Sprite):
 
     def update(self):
         self.animation_state()
-
+    
         # Max speed 50
-        if self.speed < 50:
+        if self.speed < 30:
+            if self.type == 'fly':
+                if self.move_up:
+                    self.rect.y -= self.speed
+                    self.distance_travelled += self.speed
+
+                    if self.distance_travelled >= 100:
+                        self.move_up = False
+                else:
+                    self.rect.y += self.speed
+                    self.distance_travelled -= self.speed
+
+                    if self.distance_travelled <= 0:
+                        self.move_up = True
+                        
             self.speed += self.acceleration * score
         self.rect.x -= self.speed
 
@@ -160,6 +185,7 @@ def collision_sprite():
         return True
 
 
+#####################    configurations    ####################
 pygame.init()
 screen = pygame.display.set_mode((800,400)) # window size
 pygame.display.set_caption("Runner") # window title

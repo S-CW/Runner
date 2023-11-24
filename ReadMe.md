@@ -20,10 +20,18 @@ Runner Game is a Python-based game that utilizes the pygame package to create an
     python runner.py 
     ```
 
+
 ## Control
 1. Press **P** to open setting menu
 
 2. Press **M** ingame to mute/unmute
+
+3. Press **SPACE** to jump
+
+4. Press **A** to move left
+
+5. Press **D** to move right
+
 
 ## Variable
 1. **spawn_rate_type**: A list of monster type that control the spawn rate of monster type. As of now only two monster type is available: bird, snail.
