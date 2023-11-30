@@ -11,7 +11,7 @@ mikeohearn_appear = False
 screen = pygame.display.set_mode((800,400)) # window size
 
 music1_path = 'audio/music.wav'  # replace with the path to your music file
-music2_path = 'audio/baby-dont-hurt-me.wav'  # replace with the path to your second music file
+music2_path = 'audio/what-is-love.mp3'  # replace with the path to your second music file
 
 class playGif(pygame.sprite.Sprite):
     def __init__(self, x, y, folder_path):
@@ -52,7 +52,7 @@ sky_surface = pygame.image.load("graphics/Sky.png").convert()
 ground_surface = pygame.image.load("graphics/ground.png").convert()
 
 
-richardo = playGif(400, 600, 'graphics/richardo2') 
+richardo = playGif(400, 600, 'graphics/richardo') 
 bg = playGif(400, 200, 'graphics/party')
 
 
@@ -64,6 +64,7 @@ x = 800
 condition_met = False
 frame_index = 0
 destination = 400
+direction = 'left'
 clock = pygame.time.Clock()
 
 pygame.mixer.music.load(music1_path)
@@ -81,9 +82,9 @@ while True:
         if event.type == pygame.KEYDOWN:
             # Check for a specific key press (change to the key you want)
             if event.key == pygame.K_SPACE:
-                if not condition_met:
+                if not mikeohearn_appear:
                     pygame.mixer.music.pause()
-                    condition_met = True
+                    mikeohearn_appear = True
 
                     # Load and play music2 only once
                     pygame.mixer.music.load(music2_path)
@@ -130,12 +131,28 @@ while True:
         screen.blit(mike_surf, mike_rect)
 
      
-    mike_rect.x -= 5
-    if mike_rect.x < destination:
-        destination = 800
-        mike_rect.x += 4
+    # if mike_rect.x < destination:
+    #     destination = 800
+    #     mike_rect.x += 2
+    #     if mike_rect.x == 600:
+    #         destination = 500
+    # else:
+    #     mike_rect.x -= 2
+    if direction == 'left':
+        mike_rect.x -= 2
+
+        if mike_rect.left <= 500:
+            direction = 'right'
+    elif direction == 'right':
+        mike_rect.x += 2
+
+        if mike_rect.x == 600:
+            direction = 'left'
+
+
+
     
-    print(mike_rect.x)
+    print(mike_rect.left)
     # Update the display
     pygame.display.update()
 

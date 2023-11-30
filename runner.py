@@ -1,4 +1,5 @@
 import pygame
+import os
 from sys import exit
 from random import randint, choice
 
@@ -120,6 +121,39 @@ class Obstacle(pygame.sprite.Sprite):
         self.destroy()
 
 
+class Gif(pygame.sprite.Sprite):
+    def __init__(self, x, y, folder_path):
+        super().__init__()
+        self.files = os.listdir(folder_path)
+        self.images = []
+        for file in self.files:
+            img = pygame.image.load(f"{folder_path}/{file}")
+            self.images.append(img)
+        self.index = 0
+        self.image = self.images[self.index]
+        self.rect = self.image.get_rect()
+        self.rect.center = [x, y]
+        self.counter = 0
+
+    def draw(self, screen):
+        screen.blit(self.image, self.rect)
+
+    def animate(self):
+        animation_speed = 1
+        self.counter += 1
+
+        if self.counter >= animation_speed and self.index < len(self.images) - 1:
+            self.counter = 0
+            self.index += 1
+
+        if self.index >= len(self.images) - 1:
+            self.index = 0
+
+        self.image = self.images[int(self.index)]
+
+    def update(self):
+        self.animate()
+
 class GameSound():
     def __init__(self):
         self.default_volume = 0.5
@@ -195,6 +229,7 @@ score = 0
 start_time = 0
 elapse_time = 0
 game_active = False
+mikeohearn_appear = False
 spawn_rate_type = ['fly', 'snail', 'snail', 'snail'] # control the chances of monster type to spawn
 
 gameSound = GameSound()
@@ -208,6 +243,13 @@ obstacle_group = pygame.sprite.Group()
 ####################    background    ####################
 sky_surface = pygame.image.load("graphics/Sky.png").convert()
 ground_surface = pygame.image.load("graphics/ground.png").convert()
+
+party_bg = Gif(800, 300, "graphics/party")
+richardo = Gif(600, 400, "graphics/richardo")
+
+mike_surf = pygame.image.load('graphics/mikeohearn.png')
+mike_rect = mike_surf.get_rect(center = (1000, 300))
+x = 800
 
 
 ####################    intro screen    ####################
@@ -409,7 +451,6 @@ while True:
             if event.type == obstacle_timer:
                 obstacle_group.add(Obstacle(choice(spawn_rate_type)))
                 
-                print(obstacle_group.sprites()[0].speed)
                 if obstacle_group.sprites()[0].speed > 20:
                     pygame.time.set_timer(obstacle_timer, 500)
                 elif obstacle_group.sprites()[0].speed > 10:
@@ -422,6 +463,13 @@ while True:
         # background
         screen.blit(sky_surface, (0,0))
         screen.blit(ground_surface, (0,300))
+
+        party_bg.draw(screen)
+        party_bg.update()
+
+        richardo.draw(screen)
+        richardo.update()
+
 
         score = display_score()
 
