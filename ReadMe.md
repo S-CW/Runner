@@ -26,11 +26,11 @@ Runner Game is a Python-based game that utilizes the pygame package to create an
 
 2. Press **M** ingame to mute/unmute
 
-3. Press **SPACE** or ⬆️ to jump
+3. Press ⬆️ or **SPACE** to jump
 
-4. Press **A** or ⬅️  to move left
+4. Press ⬅️ or **A** to move left
 
-5. Press **D** or ➡️ to move right
+5. Press ➡️ or **D** to move right
 
 
 ## Variable
@@ -49,3 +49,7 @@ Here are some planned enhancements for future development:
 - [x] **Progressive Difficulty**
     Implement a feature where the game's speed gradually increases as the player's score goes up, making the game more challenging over time.
 - [ ] **Additional Scoring Opportunities**
+
+
+## Updates
+- Added a feature just for fun. Play and reach score 50 to reach meme phase
