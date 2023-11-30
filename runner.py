@@ -1,5 +1,7 @@
-import pygame
 import os
+import re
+import time
+import pygame
 from sys import exit
 from random import randint, choice
 
@@ -122,12 +124,21 @@ class Obstacle(pygame.sprite.Sprite):
 
 
 class Gif(pygame.sprite.Sprite):
-    def __init__(self, x, y, folder_path):
+    def __init__(self, x, y, scale, folder_path):
         super().__init__()
+        def extract_number(filename):
+            match = re.search(r'\d+', filename)
+            return int(match.group()) if match else float('inf')
         self.files = os.listdir(folder_path)
+        self.scale = scale
         self.images = []
+
+        self.files.sort(key=extract_number)
         for file in self.files:
-            img = pygame.image.load(f"{folder_path}/{file}")
+            img = pygame.image.load(f"{folder_path}/{file}").convert_alpha()
+
+            if scale != 0:
+                img = pygame.transform.scale(img, (img.get_size()[0] * self.scale, img.get_size()[1] * self.scale))
             self.images.append(img)
         self.index = 0
         self.image = self.images[self.index]
@@ -140,7 +151,7 @@ class Gif(pygame.sprite.Sprite):
 
     def animate(self):
         animation_speed = 1
-        self.counter += 1
+        self.counter += 0.1
 
         if self.counter >= animation_speed and self.index < len(self.images) - 1:
             self.counter = 0
@@ -163,12 +174,25 @@ class GameSound():
         self.jump_sound = pygame.mixer.Sound('audio/jump.mp3')
         self.jump_sound.set_volume(self.default_volume)
 
-    def background_music(self):
+    def load_bgm(self):
         self.increase_volume()
         self.decrease_volume()
         pygame.mixer.music.load('audio/music.wav')
         pygame.mixer.music.set_volume(self.default_volume)
         pygame.mixer.music.play(loops = -1)
+
+    def play_meme_bgm(self):
+        meme_bgm = 'audio/what-is-love.mp3'
+
+        pygame.mixer.music.pause()
+
+        # Load and play meme music once
+        pygame.mixer.music.load(meme_bgm)
+        pygame.mixer.music.play(1)
+
+        # Set the time to resume bgm after meme music has finished
+        resume_time = time.time() + pygame.mixer.Sound(meme_bgm).get_length()
+        return resume_time
 
     def set_volume(self, volume):
         pygame.mixer.music.set_volume(volume)
@@ -229,7 +253,9 @@ score = 0
 start_time = 0
 elapse_time = 0
 game_active = False
+bgm_loaded = False
 mikeohearn_appear = False
+direction = 'left'
 spawn_rate_type = ['fly', 'snail', 'snail', 'snail'] # control the chances of monster type to spawn
 
 gameSound = GameSound()
@@ -243,14 +269,7 @@ obstacle_group = pygame.sprite.Group()
 ####################    background    ####################
 sky_surface = pygame.image.load("graphics/Sky.png").convert()
 ground_surface = pygame.image.load("graphics/ground.png").convert()
-
-party_bg = Gif(800, 300, "graphics/party")
-richardo = Gif(600, 400, "graphics/richardo")
-
-mike_surf = pygame.image.load('graphics/mikeohearn.png')
-mike_rect = mike_surf.get_rect(center = (1000, 300))
-x = 800
-
+mike_surface = pygame.image.load('graphics/mikeohearn.png').convert_alpha()
 
 ####################    intro screen    ####################
 player_stand = pygame.image.load("./graphics/Player/player_stand.png").convert_alpha()
@@ -277,8 +296,15 @@ def draw_text(text, font, color, surface, x, y):
 
     return text_rect
 
+def reset_game():
+    gameSound.load_bgm()
+    pygame.time.set_timer(obstacle_timer, 1400)
+
+    return False
+
+
 # Game screen
-gameSound.background_music()
+gameSound.load_bgm()
 
 # Setting screen
 def settings():
@@ -430,7 +456,8 @@ while True:
                 stopped_time = int(pygame.time.get_ticks() / 1000)
                 elapse_time += settings()
 
-        if not game_active: 
+        if not game_active:
+
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     # sprite_initial speed is set before add sprite
@@ -438,6 +465,9 @@ while True:
                     Player.sprite_initial_speed = 0
 
                     player.add(Player())
+                    richardo = Gif(400, 600, 1.5, "graphics/richardo")
+                    party_bg = Gif(400, 100, 0, "graphics/party")
+                    mike_rect = mike_surface.get_rect(center = (1000, 190))
                     game_active = True
 
                     start_time = int(pygame.time.get_ticks() / 1000)
@@ -451,10 +481,11 @@ while True:
             if event.type == obstacle_timer:
                 obstacle_group.add(Obstacle(choice(spawn_rate_type)))
                 
-                if obstacle_group.sprites()[0].speed > 20:
+                if score > 75:
                     pygame.time.set_timer(obstacle_timer, 500)
-                elif obstacle_group.sprites()[0].speed > 10:
-                    pygame.time.set_timer(obstacle_timer, randint(600, 800))
+                elif score > 50:
+                    pygame.time.set_timer(obstacle_timer, randint(700, 900))
+
             
             if event.type == pygame.KEYDOWN and event.key == pygame.K_m:
                 gameSound.mute()
@@ -462,15 +493,31 @@ while True:
     if game_active:
         # background
         screen.blit(sky_surface, (0,0))
+
+        if mikeohearn_appear:
+            party_bg.draw(screen)
+            party_bg.update()
+
+            richardo.draw(screen)
+            richardo.update()
+
+            screen.blit(mike_surface, mike_rect)
+
+            if richardo.rect.y >= 0:
+                richardo.rect.y -= 1
+
+            if direction == 'left':
+                mike_rect.x -= 1
+
+                if mike_rect.left <= 400:
+                    direction = 'right'
+            elif direction == 'right':
+                mike_rect.x += 1
+
+                if mike_rect.x >= 600:
+                    direction = 'left'
+
         screen.blit(ground_surface, (0,300))
-
-        party_bg.draw(screen)
-        party_bg.update()
-
-        richardo.draw(screen)
-        richardo.update()
-
-
         score = display_score()
 
         # player
@@ -484,6 +531,18 @@ while True:
         # collision
         game_active = collision_sprite()
 
+        # meme setup
+        if score == 50 and not mikeohearn_appear:
+            resume_time = gameSound.play_meme_bgm()
+            mikeohearn_appear = True
+
+        # Check if there is any bgm playing
+        if mikeohearn_appear and not pygame.mixer.music.get_busy():
+            if time.time() >= resume_time:
+                gameSound.load_bgm()
+                mikeohearn_appear = False
+        
+
     else:
         screen.fill((94,129,162))
         screen.blit(player_stand, player_stand_rect)
@@ -491,6 +550,9 @@ while True:
 
         score_message = font.render(f'Your score: {score}', False, (111,196,169))
         score_message_rect = score_message.get_rect(center = (400, 330))
+
+        if mikeohearn_appear:
+            mikeohearn_appear = reset_game()
 
         if score == 0:
             game_mesage = draw_text("Press space to run", font, (111,196,169), screen, 400, 340)

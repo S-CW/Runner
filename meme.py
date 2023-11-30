@@ -2,7 +2,7 @@ import pygame
 import time
 import sys
 import os
-from moviepy.editor import VideoFileClip
+import re
 
 pygame.init()
 start_time = pygame.time.get_ticks()
@@ -14,18 +14,32 @@ music1_path = 'audio/music.wav'  # replace with the path to your music file
 music2_path = 'audio/what-is-love.mp3'  # replace with the path to your second music file
 
 class playGif(pygame.sprite.Sprite):
-    def __init__(self, x, y, folder_path):
+    def __init__(self, x, y, scale, folder_path):
         super().__init__()
+        def extract_number(filename):
+            match = re.search(r'\d+', filename)
+            return int(match.group()) if match else float('inf')
+            
         self.files = os.listdir(folder_path)
+        self.scale = scale
         self.images = []
+        
+        self.files.sort(key=extract_number)
+
         for file in self.files:
-            img = pygame.image.load(f"{folder_path}/{file}")
+            
+            img = pygame.image.load(f"{folder_path}/{file}").convert_alpha()
+
+            if self.scale != 0:
+                img = pygame.transform.scale(img, (img.get_size()[0] * self.scale, img.get_size()[1] * self.scale))
             self.images.append(img)
         self.index = 0
         self.image = self.images[self.index]
         self.rect = self.image.get_rect()
         self.rect.center = [x, y]
         self.counter = 0
+
+    
 
     def draw(self, screen):
         screen.blit(self.image, self.rect)
@@ -48,12 +62,8 @@ class playGif(pygame.sprite.Sprite):
         self.animate()
 
 
-sky_surface = pygame.image.load("graphics/Sky.png").convert()
-ground_surface = pygame.image.load("graphics/ground.png").convert()
-
-
-richardo = playGif(400, 600, 'graphics/richardo') 
-bg = playGif(400, 200, 'graphics/party')
+richardo = playGif(400, 600, 1.5, 'graphics/richardo2')
+bg = playGif(400, 200, 0, 'graphics/party')
 
 
 mike_surf = pygame.image.load('graphics/mikeohearn.png')
@@ -73,7 +83,6 @@ pygame.mixer.music.play(-1)  # -1 means loop indefinitely
 while True:
     current_time = pygame.time.get_ticks()
 
-    
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -94,14 +103,12 @@ while True:
                     # Set the time to resume music1 after music2 has played
                     resume_time = time.time() + pygame.mixer.Sound(music2_path).get_length()
 
-    # screen.blit(sky_surface, (0,0))
-    bg.draw(screen)
-    bg.update()
+    # bg.draw(screen)
+    # bg.update()
+    screen.fill("black")
 
     richardo.draw(screen)
     richardo.update()
-
-    screen.blit(ground_surface, (0,300))
     
     elapse_time = current_time - start_time
     if elapse_time >= delay and not mikeohearn_appear:
@@ -130,14 +137,6 @@ while True:
     if mikeohearn_appear:
         screen.blit(mike_surf, mike_rect)
 
-     
-    # if mike_rect.x < destination:
-    #     destination = 800
-    #     mike_rect.x += 2
-    #     if mike_rect.x == 600:
-    #         destination = 500
-    # else:
-    #     mike_rect.x -= 2
     if direction == 'left':
         mike_rect.x -= 2
 
@@ -149,10 +148,6 @@ while True:
         if mike_rect.x == 600:
             direction = 'left'
 
-
-
-    
-    print(mike_rect.left)
     # Update the display
     pygame.display.update()
 
