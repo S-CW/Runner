@@ -62,7 +62,7 @@ class playGif(pygame.sprite.Sprite):
         self.animate()
 
 
-richardo = playGif(400, 600, 1.5, 'graphics/richardo2')
+richardo = playGif(400, 600, 1.5, 'graphics/richardo')
 bg = playGif(400, 200, 0, 'graphics/party')
 
 
