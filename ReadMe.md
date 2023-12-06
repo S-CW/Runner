@@ -2,6 +2,26 @@
 ## Overview
 Runner Game is a Python-based game that utilizes the pygame package to create an entertaining gaming experience.
 
+<p align="center">
+  <strong>Main Page</strong>
+</p>
+
+![main_page](screenshots/screenshot-1.PNG)
+
+<p align="center">
+  <strong>Play Page</strong>
+</p>
+
+![play_page](screenshots/screenshot-2.PNG)
+
+<p align="center">
+  <strong>Menu Page</strong>
+</p>
+
+![main_page](screenshots/screenshot-3.PNG)
+![main_page](screenshots/screenshot-4.PNG)
+
+
 ## How to use
 1. **Clone the Repository**
     ```bash

@@ -204,17 +204,17 @@ class GameSound():
         else:
             self.increase_volume()
 
+        if not self.is_mute:
+            self.set_volume(self.volume)
 
     def increase_volume(self):
         if self.volume <= 1:
             self.volume += 0.02
-            self.set_volume(self.volume)
 
 
     def decrease_volume(self):
         if self.volume >= 0:
             self.volume -= 0.02
-            self.set_volume(self.volume)
 
     def mute(self):
         if self.is_mute:
