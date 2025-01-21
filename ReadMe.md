@@ -25,7 +25,7 @@ Runner Game is a Python-based game that utilizes the pygame package to create an
 ## How to use
 1. **Clone the Repository**
     ```bash
-    git clone git@github.com:S-CW/Runner-game.git
+    git clone https://github.com/S-CW/pygame-runner.git
     ```
 
 2. **Install Dependencies**
